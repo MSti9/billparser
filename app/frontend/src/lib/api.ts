@@ -1,7 +1,9 @@
-import { createClient } from '@metagptx/web-sdk';
+import axios from 'axios';
 
-// Create client instance
-export const client = createClient();
+const apiClient = axios.create({
+  baseURL: '',
+  headers: { 'Content-Type': 'application/json' },
+});
 
 // Bill API types
 export interface FetchBillRequest {
@@ -45,20 +47,12 @@ export interface AnalyzeBillRequest {
 // Bill API functions
 export const billApi = {
   async fetchBill(url: string): Promise<FetchBillResponse> {
-    const response = await client.apiCall.invoke({
-      url: '/api/v1/bills/fetch',
-      method: 'POST',
-      data: { url },
-    });
+    const response = await apiClient.post<FetchBillResponse>('/api/v1/bills/fetch', { url });
     return response.data;
   },
 
   async parseBill(html: string): Promise<ParseBillResponse> {
-    const response = await client.apiCall.invoke({
-      url: '/api/v1/bills/parse',
-      method: 'POST',
-      data: { html },
-    });
+    const response = await apiClient.post<ParseBillResponse>('/api/v1/bills/parse', { html });
     return response.data;
   },
 

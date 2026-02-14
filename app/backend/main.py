@@ -13,9 +13,28 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
 
 # MODULE_IMPORTS_START
-from services.database import initialize_database, close_database
-from services.mock_data import initialize_mock_data
-from services.auth import initialize_admin_user
+# Database/auth/mock_data are optional — core bill parsing works without them
+_has_database = False
+_has_mock_data = False
+_has_auth = False
+
+try:
+    from services.database import initialize_database, close_database
+    _has_database = True
+except BaseException:
+    pass
+
+try:
+    from services.mock_data import initialize_mock_data
+    _has_mock_data = True
+except BaseException:
+    pass
+
+try:
+    from services.auth import initialize_admin_user
+    _has_auth = True
+except BaseException:
+    pass
 # MODULE_IMPORTS_END
 
 
@@ -66,21 +85,39 @@ async def lifespan(app: FastAPI):
     logger.info("=== Application startup initiated ===")
 
     # MODULE_STARTUP_START
-    await initialize_database()
-    await initialize_mock_data()
-    await initialize_admin_user()
+    if _has_database:
+        try:
+            await initialize_database()
+        except Exception as e:
+            logger.warning(f"Database initialization skipped: {e}")
+
+    if _has_mock_data:
+        try:
+            await initialize_mock_data()
+        except Exception as e:
+            logger.warning(f"Mock data initialization skipped: {e}")
+
+    if _has_auth:
+        try:
+            await initialize_admin_user()
+        except Exception as e:
+            logger.warning(f"Admin user initialization skipped: {e}")
     # MODULE_STARTUP_END
 
     logger.info("=== Application startup completed successfully ===")
     yield
     # MODULE_SHUTDOWN_START
-    await close_database()
+    if _has_database:
+        try:
+            await close_database()
+        except Exception as e:
+            logger.warning(f"Database shutdown error: {e}")
     # MODULE_SHUTDOWN_END
 
 
 app = FastAPI(
-    title="FastAPI Modular Template",
-    description="A best-practice FastAPI template with modular architecture",
+    title="Legislative Bill Parser",
+    description="Parse legislative bill HTML to detect NEW and DELETED language",
     version="1.0.0",
     lifespan=lifespan,
 )
