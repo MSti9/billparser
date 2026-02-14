@@ -5,6 +5,14 @@ import pkgutil
 import traceback
 from contextlib import asynccontextmanager
 from datetime import datetime
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# Load .env early so ANTHROPIC_API_KEY (and other vars) are available at import time
+_env_path = Path(__file__).parent.parent / ".env"
+if _env_path.exists():
+    load_dotenv(_env_path, override=True)
 
 from core.config import settings
 from fastapi import FastAPI, HTTPException, Request, status
